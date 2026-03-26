@@ -78,7 +78,7 @@ We support **two** databases:
 | **Default**  | **H2**       | A tiny database that lives **inside your app's memory**. When you stop the app, all data disappears. Perfect for learning and testing — no installation needed. |
 | **Production** | **PostgreSQL** | A real, full database installed on your computer or server. Data is saved permanently to disk. Used for real applications. |
 
-Right now, when you run `./mvnw spring-boot:run`, it connects to **PostgreSQL** on your machine. You need PostgreSQL running with a database called `productdb` (see [Running the Application](#running-the-application) for setup). The table is created automatically the first time the app starts — you never write any SQL yourself.
+Right now, when you run `./mvnw spring-boot:run`, it uses **H2** — a tiny database built right into the app. No installation, no username, no password, nothing to set up. The table is created automatically when the app starts and destroyed when it stops. When you're ready for a real database, you can switch to PostgreSQL (see [Database Configuration](#database-configuration)).
 
 ### The Big Picture (How It All Connects)
 
@@ -503,26 +503,9 @@ The `GET /api/products` endpoint supports:
 
 - **Java 17+** (JDK)
 - **Maven 3.8+** (or use the Maven wrapper)
-- **PostgreSQL** installed and running
+- That's it! No database installation needed (H2 is built in)
 
-### Step 1 — Create the Database
-
-Open a terminal and run:
-
-```bash
-psql -U postgres
-```
-
-Then inside the `psql` prompt:
-
-```sql
-CREATE DATABASE productdb;
-\q
-```
-
-That's all. The `products` table is created **automatically** by Spring Boot when the app starts — you never write SQL for that.
-
-### Step 2 — Run the App
+### Run the App
 
 ```bash
 ./mvnw spring-boot:run
@@ -530,15 +513,27 @@ That's all. The `products` table is created **automatically** by Spring Boot whe
 
 The API is now live at `http://localhost:8080/api/products`.
 
-### Custom PostgreSQL credentials
+### (Optional) Use PostgreSQL Instead
 
-If your Postgres username/password are different from the defaults (`postgres`/`postgres`), you can override them:
+If you want a real database that persists data permanently:
+
+1. Install PostgreSQL on your machine
+2. Create the database:
+   ```bash
+   psql -U postgres -c "CREATE DATABASE productdb;"
+   ```
+3. Run with the postgres profile:
+   ```bash
+   ./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres
+   ```
+
+If your Postgres username/password are different from `postgres`/`postgres`:
 
 ```bash
 SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/productdb \
 SPRING_DATASOURCE_USERNAME=myuser \
 SPRING_DATASOURCE_PASSWORD=mypass \
-./mvnw spring-boot:run
+./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres
 ```
 
 ---
@@ -549,7 +544,7 @@ SPRING_DATASOURCE_PASSWORD=mypass \
 ./mvnw test
 ```
 
-The tests use an in-memory H2 database (via `@ActiveProfiles("test")`) so they run anywhere without needing a real PostgreSQL server.
+Tests use the same H2 in-memory database, so they work anywhere with zero setup.
 
 ---
 
@@ -557,8 +552,9 @@ The tests use an in-memory H2 database (via `@ActiveProfiles("test")`) so they r
 
 | Context     | Database   | Connection                             | DDL Strategy   |
 |-------------|------------|----------------------------------------|----------------|
-| **App** (default) | PostgreSQL | `jdbc:postgresql://localhost:5432/productdb` | `update` |
+| **App** (default) | H2         | `jdbc:h2:mem:productdb` (in-memory)    | `create-drop`  |
+| **App** (postgres profile) | PostgreSQL | `jdbc:postgresql://localhost:5432/productdb` | `update` |
 | **Tests**   | H2         | `jdbc:h2:mem:testdb` (in-memory)       | `create-drop`  |
 
-- **`update`** — creates/alters tables to match your entity classes, but never drops existing data. Safe for real use.
-- **`create-drop`** — creates tables on startup, drops them on shutdown. Used only in tests so each run starts fresh.
+- **`create-drop`** — creates tables on startup, drops them on shutdown. Perfect for development and learning.
+- **`update`** — creates/alters tables but never drops existing data. Safe for production with real data.
