@@ -78,7 +78,7 @@ We support **two** databases:
 | **Default**  | **H2**       | A tiny database that lives **inside your app's memory**. When you stop the app, all data disappears. Perfect for learning and testing — no installation needed. |
 | **Production** | **PostgreSQL** | A real, full database installed on your computer or server. Data is saved permanently to disk. Used for real applications. |
 
-Right now, when you run `./mvnw spring-boot:run`, it uses **H2** automatically. The table is created when the app starts and destroyed when it stops. You don't need to install anything.
+Right now, when you run `./mvnw spring-boot:run`, it connects to **PostgreSQL** on your machine. You need PostgreSQL running with a database called `productdb` (see [Running the Application](#running-the-application) for setup). The table is created automatically the first time the app starts — you never write any SQL yourself.
 
 ### The Big Picture (How It All Connects)
 
@@ -503,32 +503,42 @@ The `GET /api/products` endpoint supports:
 
 - **Java 17+** (JDK)
 - **Maven 3.8+** (or use the Maven wrapper)
+- **PostgreSQL** installed and running
 
-### Quick Start (H2 in-memory database — no setup needed)
+### Step 1 — Create the Database
+
+Open a terminal and run:
+
+```bash
+psql -U postgres
+```
+
+Then inside the `psql` prompt:
+
+```sql
+CREATE DATABASE productdb;
+\q
+```
+
+That's all. The `products` table is created **automatically** by Spring Boot when the app starts — you never write SQL for that.
+
+### Step 2 — Run the App
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-The API is available at `http://localhost:8080/api/products`.
-The H2 console is at `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:mem:productdb`).
+The API is now live at `http://localhost:8080/api/products`.
 
-### With PostgreSQL
+### Custom PostgreSQL credentials
 
-1. Create a database: `CREATE DATABASE productdb;`
-2. Run with the `postgres` profile:
-
-```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres
-```
-
-Or set environment variables for custom credentials:
+If your Postgres username/password are different from the defaults (`postgres`/`postgres`), you can override them:
 
 ```bash
 SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/productdb \
 SPRING_DATASOURCE_USERNAME=myuser \
 SPRING_DATASOURCE_PASSWORD=mypass \
-./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres
+./mvnw spring-boot:run
 ```
 
 ---
@@ -539,16 +549,16 @@ SPRING_DATASOURCE_PASSWORD=mypass \
 ./mvnw test
 ```
 
-The tests use H2 in-memory database and cover all HTTP methods including pagination, validation errors, and 404 handling.
+The tests use an in-memory H2 database (via `@ActiveProfiles("test")`) so they run anywhere without needing a real PostgreSQL server.
 
 ---
 
 ## Database Configuration
 
-| Profile    | Database   | Connection                             | DDL Strategy   |
-|------------|------------|----------------------------------------|----------------|
-| (default)  | H2         | `jdbc:h2:mem:productdb` (in-memory)    | `create-drop`  |
-| `postgres` | PostgreSQL | `jdbc:postgresql://localhost:5432/productdb` | `update` |
+| Context     | Database   | Connection                             | DDL Strategy   |
+|-------------|------------|----------------------------------------|----------------|
+| **App** (default) | PostgreSQL | `jdbc:postgresql://localhost:5432/productdb` | `update` |
+| **Tests**   | H2         | `jdbc:h2:mem:testdb` (in-memory)       | `create-drop`  |
 
-- **`create-drop`** — creates tables on startup, drops them on shutdown (perfect for development).
-- **`update`** — creates/alters tables to match entities but never drops (safe for production).
+- **`update`** — creates/alters tables to match your entity classes, but never drops existing data. Safe for real use.
+- **`create-drop`** — creates tables on startup, drops them on shutdown. Used only in tests so each run starts fresh.
