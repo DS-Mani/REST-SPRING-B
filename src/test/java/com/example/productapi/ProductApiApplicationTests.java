@@ -177,6 +177,24 @@ class ProductApiApplicationTests {
                 .andExpect(jsonPath("$.content", hasSize(1)));
     }
 
+    // ── Bad JSON & Bad Sort Field ─────────────────
+
+    @Test
+    void createProduct_withMalformedJson_shouldReturn400() throws Exception {
+        mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{name: broken}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Malformed JSON request. Please check your JSON syntax."));
+    }
+
+    @Test
+    void getAllProducts_withInvalidSortField_shouldReturn400() throws Exception {
+        mockMvc.perform(get("/api/products").param("sortBy", "nonexistent"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Invalid sort field")));
+    }
+
     // ── Helper ────────────────────────────────────
 
     private String createSampleProduct() throws Exception {
