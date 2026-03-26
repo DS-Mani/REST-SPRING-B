@@ -33,9 +33,9 @@ server:
 #
 # Before that, set up PostgreSQL:
 #   1. Install PostgreSQL on your machine
-#   2. Open terminal: psql -U postgres
-#   3. Run: CREATE DATABASE productdb;
-#   4. If your password is different, change it below
+#   2. Create the database: psql -U postgres -c "CREATE DATABASE productdb;"
+#   3. If your credentials are different, override them:
+#      SPRING_DATASOURCE_USERNAME=myuser SPRING_DATASOURCE_PASSWORD=mypass ./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres
 spring:
   config:
     activate:
@@ -44,8 +44,12 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/productdb
     driver-class-name: org.postgresql.Driver
-    username: postgres
-    password: postgres
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+
+  h2:
+    console:
+      enabled: false
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
