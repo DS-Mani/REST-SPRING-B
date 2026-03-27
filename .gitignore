@@ -26,3 +26,6 @@ target/
 
 ### Logs ###
 *.log
+
+### Local credentials (NEVER push to GitHub) ###
+application-local.yml

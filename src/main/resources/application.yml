@@ -44,8 +44,8 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/productdb
     driver-class-name: org.postgresql.Driver
-    username: ${SPRING_DATASOURCE_USERNAME:manikanta}
-    password: ${SPRING_DATASOURCE_PASSWORD:manikanta123}
+    username: ${DB_USERNAME:manikanta}
+    password: ${DB_PASSWORD:}
 
   h2:
     console:

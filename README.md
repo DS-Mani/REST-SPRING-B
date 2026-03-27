@@ -520,20 +520,27 @@ If you want a real database that persists data permanently:
 1. Install PostgreSQL on your machine
 2. Create the database:
    ```bash
-   psql -U postgres -c "CREATE DATABASE productdb;"
+   createdb -U manikanta productdb
    ```
-3. Run with the postgres profile:
+3. Set up your credentials (one time):
+   Open `src/main/resources/application-local.yml` and put your real password:
+   ```yaml
+   spring:
+     datasource:
+       username: manikanta
+       password: YOUR_REAL_PASSWORD
+   ```
+   This file is in `.gitignore` — it **never** gets pushed to GitHub.
+
+4. Run with both the postgres and local profiles:
    ```bash
-   ./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres
+   ./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres,local
    ```
 
-If your Postgres username/password are different from `postgres`/`postgres`:
+Alternatively, pass the password directly in the command (no file needed):
 
 ```bash
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/productdb \
-SPRING_DATASOURCE_USERNAME=myuser \
-SPRING_DATASOURCE_PASSWORD=mypass \
-./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres
+DB_PASSWORD=yourpassword ./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres
 ```
 
 ---
